@@ -1,0 +1,41 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score,
+recall_score, f1_score
+df = pd.read_csv("emails.csv")
+df.head()
+
+
+df = df.drop(columns=['Email No.'])
+
+X = df.drop(columns='Prediction') # Features (word columns)
+y = df['Prediction'] # Target (Spam or Not Spam)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+test_size=0.2, random_state=42)
+
+knn_model = KNeighborsClassifier(n_neighbors=5)
+knn_model.fit(X_train, y_train)
+
+knn_predictions = knn_model.predict(X_test)
+
+
+svm_model = SVC(kernel='linear')
+svm_model.fit(X_train, y_train)
+svm_predictions = svm_model.predict(X_test)
+
+def evaluate_model(y_test, predictions):
+ print("Accuracy:", accuracy_score(y_test, predictions))
+ print("Precision:", precision_score(y_test, predictions))
+ print("Recall:", recall_score(y_test, predictions))
+ print("F1 Score:", f1_score(y_test, predictions))
+
+ 
+# Evaluate KNN
+print("KNN Model Performance:")
+evaluate_model(y_test, knn_predictions)
+# Evaluate SVM
+print("\nSVM Model Performance:")
+evaluate_model(y_test, svm_predictions)

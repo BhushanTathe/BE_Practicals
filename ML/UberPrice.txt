@@ -1,0 +1,59 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from geopy.distance import geodesic
+
+
+data = pd.read_csv("uber.csv")  # Replace with the path to your data file
+data.head()
+
+
+# Filter out rows where latitude values are invalid
+data = data[(data['pickup_latitude'] >= -90) & (data['pickup_latitude'] <= 90)]
+data = data[(data['dropoff_latitude'] >= -90) & (data['dropoff_latitude'] <= 90)]
+
+
+def calculate_distance(row):
+    pickup = (row['pickup_latitude'], row['pickup_longitude'])
+    dropoff = (row['dropoff_latitude'], row['dropoff_longitude'])
+    return geodesic(pickup, dropoff).km
+
+data['distance_km'] = data.apply(calculate_distance, axis=1)
+
+X = data[['distance_km', 'passenger_count']]
+y = data['fare_amount']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+
+r2 = r2_score(y_test,y_pred)
+mse = mean_squared_error(y_test,y_pred)
+rmse = np.sqrt(mse)
+mae = mean_absolute_error(y_test,y_pred)
+
+print(f"  R2 Score:{r2}")
+print(f"  R2 Score:{mse}")
+print(f"  R2 Score:{rmse}")
+print(f"  R2 Score:{mae}")
+
+new_ride = {
+    'distance_km': 5.0,  # Example distance in kilometers
+    'passenger_count': 1  # Example passenger count
+}
+new_ride_df = pd.DataFrame([new_ride])
+
+predicted_fare = model.predict(new_ride_df)
+print("Predicted Fare:", predicted_fare[0])
+
+
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+
+rf_model.fit(X_train,y_train)
